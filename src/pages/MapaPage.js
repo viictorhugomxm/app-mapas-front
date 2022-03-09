@@ -1,34 +1,40 @@
-import mapboxgl from 'mapbox-gl';
-import { useEffect, useRef, useState } from 'react';
 
-mapboxgl.accessToken = 'pk.eyJ1IjoidmlpY3Rvcmh1Z29teG0iLCJhIjoiY2wwaWZyaHh4MDI5ZTNkcjU3eHVsNDNsaSJ9.E-nh29vFts_zpYPWotnPbg';
+import { useEffect } from 'react';
+import { useMapbox } from '../hooks/useMapbox';
 
 const puntoInicial = {
-  lng: 5,
-  lat: 34,
-  zoom: 2
+  lng: -101.1844300,
+  lat: 19.7007800,
+  zoom: 10
 }
 
 export const MapaPage = () => {
 
-  const mapaDiv = useRef();
-  const [, setMapa] = useState()
+  const {setRef, coords, nuevoMarcador$, movimientoMarcador$} = useMapbox(puntoInicial);
 
+  //Nuevo Marcador
   useEffect(() => {
-    const map = new mapboxgl.Map({
-      container: mapaDiv.current, // container ID
-      style: 'mapbox://styles/mapbox/streets-v11', // style URL
-      center: [puntoInicial.lng, puntoInicial.lat], // starting position [lng, lat]
-      zoom: puntoInicial.zoom // starting zoom
-    });
+    nuevoMarcador$.subscribe(marcador => {
+      console.log(marcador);
+    })
+  },[nuevoMarcador$])
 
-    setMapa(map);
-  },[])
+  //Movimiento marcador
+  useEffect(() => {
+    movimientoMarcador$.subscribe(marcador => {
+      console.log(marcador);
+    })
+  }, [movimientoMarcador$])
 
   return (
     <>
+
+      <div className="info">
+        lng: {coords.lng} | lat: {coords.lat} | zoom: {coords.zoom}
+      </div>
+
       <div 
-        ref={mapaDiv}
+        ref={setRef}
         className="mapContainer"
       />
     </>
