@@ -11,15 +11,17 @@ const puntoInicial = {
 
 export const MapaPage = () => {
 
-  const {setRef, coords, nuevoMarcador$, movimientoMarcador$} = useMapbox(puntoInicial);
+  const {setRef, coords, nuevoMarcador$, movimientoMarcador$, agregarMarcador, actualizarPosicion} = useMapbox(puntoInicial);
   const {socket} = useContext(SocketContext);
 
   //Escuchar los marcadores existentes
   useEffect(() => {
     socket.on('marcadores-activos', (marcadores)=> {
-      console.log(marcadores)
+      for (const key of Object.keys(marcadores)) {
+        agregarMarcador(marcadores[key], key)
+      }
     } )
-  })
+  },[socket, agregarMarcador])
 
   //Nuevo Marcador
   useEffect(() => {
@@ -31,16 +33,23 @@ export const MapaPage = () => {
   //Movimiento marcador
   useEffect(() => {
     movimientoMarcador$.subscribe(marcador => {
-      console.log(marcador);
+      socket.emit('marcador-actualizado', marcador);
     })
   }, [movimientoMarcador$])
+
+  //Movimiento del marcador mediante sockets
+  useEffect(() => {
+    socket.on('marcador-actualizado', (marcador) => {
+      actualizarPosicion(marcador)
+    })
+  },[socket, actualizarPosicion])
 
   //Escuchar nuevos marcadores
   useEffect(() => {
     socket.on('marcador-nuevo', (marcador) => {
-      console.log(marcador)
+      agregarMarcador(marcador, marcador.id)
     })
-  }, [socket])
+  }, [socket, agregarMarcador])
 
   return (
     <>

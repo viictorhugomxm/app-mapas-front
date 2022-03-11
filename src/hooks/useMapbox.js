@@ -9,7 +9,7 @@ mapboxgl.accessToken = 'pk.eyJ1IjoidmlpY3Rvcmh1Z29teG0iLCJhIjoiY2wwaWZyaHh4MDI5Z
 
 export const useMapbox = (puntoInicial) => {
 
-  //Referencia al DIV del pago
+  //Referencia al DIV del mapa
   const mapaDiv = useRef();
   const setRef = useCallback((node) => {
     mapaDiv.current = node
@@ -27,20 +27,28 @@ export const useMapbox = (puntoInicial) => {
   const [coords, setCoords] = useState(puntoInicial);
 
   //Funcionn para agregar marcadores
-  const agregarMarcador = useCallback(({ev}) => {
-    const {lng, lat} = ev.lngLat;
+  const agregarMarcador = useCallback((ev, id) => {
+    const {lng, lat} = ev.lngLat || ev;
     const marker = new mapboxgl.Marker()
-    marker.id = v4()
+    marker.id = id ?? v4()
 
 
     marker
       .setLngLat([lng, lat])
       .addTo(mapa.current)
-      .setDragabble(true)
+      .setDraggable(true)
 
 
     //Asignando el objeto de marcadores
     marcadores.current[marker.id] = marker;
+
+    if(!id) {
+      nuevoMarcador.current.next({
+        id: marker.id,
+        lng,
+        lat
+      })
+    }
 
     //Si el marcador tiene ID no emitir
     nuevoMarcador.current.next({
@@ -57,6 +65,11 @@ export const useMapbox = (puntoInicial) => {
     })
   },[])
 
+  const actualizarPosicion = useCallback(({id, lng,lat}) => {
+    marcadores.current[id].setLngLat([lng])
+
+  }, [])
+
   useEffect(() => {
     
     // mapboxgl.workerClass = MapboxWorker;
@@ -67,17 +80,17 @@ export const useMapbox = (puntoInicial) => {
       zoom: puntoInicial.zoom // starting zoom
     });
 
-    map.current = map;
+    mapa.current = map;
   },[puntoInicial])
 
   //Cuando se mueve el mapa
   useEffect(() => {
     mapa.current?.on('move', () => {
-      const {lng, lat} = mapa.current().getCenter();
+      const {lng, lat} = mapa.current.getCenter();
       setCoords({
         lng: lng.toFixed(4),
         lat: lat.toFixed(4),
-        zoom: mapa.current().getZoom().toFixed(2)
+        zoom: mapa.current.getZoom().toFixed(2)
       })
     })
 
@@ -96,7 +109,7 @@ export const useMapbox = (puntoInicial) => {
     marcadores,
     nuevoMarcador$: nuevoMarcador.current,
     movimientoMarcador$: movimientoMarcador.current,
-    setRef
-
+    setRef,
+    actualizarPosicion
   }
 }
